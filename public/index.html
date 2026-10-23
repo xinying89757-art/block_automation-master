@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Playwright 测试控制台</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .test-list {
+            margin-bottom: 30px;
+        }
+
+        .test-card {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .test-card:hover {
+            border-color: #667eea;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+
+        .test-card h3 {
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 1.3em;
+        }
+
+        .test-card p {
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            margin-right: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .status.running {
+            background: #ffc107;
+            color: #000;
+        }
+
+        .status.completed {
+            background: #28a745;
+            color: white;
+        }
+
+        .status.failed {
+            background: #dc3545;
+            color: white;
+        }
+
+        .output {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            line-height: 1.6;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 20px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .output.empty {
+            color: #888;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .history {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #e9ecef;
+        }
+
+        .history h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        .history-item {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+
+        .history-item h4 {
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .history-item .meta {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .refresh-btn {
+            float: right;
+            margin-top: -40px;
+        }
+
+        .auth-section {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .auth-section.success {
+            background: #d4edda;
+            border-color: #28a745;
+        }
+
+        .auth-section h3 {
+            color: #856404;
+            margin-bottom: 10px;
+        }
+
+        .auth-section.success h3 {
+            color: #155724;
+        }
+
+        .auth-section p {
+            color: #856404;
+            margin-bottom: 15px;
+        }
+
+        .auth-section.success p {
+            color: #155724;
+        }
+
+        .warning {
+            color: #dc3545;
+            font-weight: 600;
+            margin-top: 10px;
+        }
+
+        .test-params {
+            background: #f0f0f0;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 15px;
+            margin-bottom: 15px;
+        }
+
+        .test-params h4 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1em;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            color: #555;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1em;
+            box-sizing: border-box;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎭 Playwright 测试控制台</h1>
+            <p>通过 Web 界面执行和管理自动化测试</p>
+        </div>
+        <div class="content">
+            <div id="auth-section" class="auth-section">
+                <h3>🔐 账号认证状态</h3>
+                <div id="auth-status-list"></div>
+                <div id="auth-generate-form" style="display: none; margin-top: 20px;">
+                    <h4>生成认证文件</h4>
+                    <div class="form-group">
+                        <label for="generate-account">账号:</label>
+                        <select id="generate-account" required>
+                            <option value="">请选择账号</option>
+                        </select>
+                    </div>
+                    <p style="color: #666; font-size: 0.9em; margin-top: 10px;">
+                        💡 密码已配置在后端，无需输入
+                    </p>
+                    <button id="generate-auth-btn" class="btn" onclick="generateAuthForAccount()">
+                        生成认证文件
+                    </button>
+                </div>
+            </div>
+
+            <div class="test-list">
+                <h2>可用测试</h2>
+                <div id="tests-container"></div>
+            </div>
+
+            <div id="output-section" style="display: none;">
+                <h2>执行输出</h2>
+                <div id="output" class="output empty">等待测试执行...</div>
+            </div>
+
+            <div class="history">
+                <h2>
+                    执行历史
+                    <button class="btn btn-secondary refresh-btn" onclick="loadHistory()">刷新</button>
+                </h2>
+                <div id="history-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentExecutionId = null;
+        let statusCheckInterval = null;
+        let authExists = false;
+        let moduleTypes = [];
+        let accounts = [];
+
+        // 检查认证状态
+        async function checkAuthStatus() {
+            try {
+                const response = await fetch('/api/auth/status');
+                const data = await response.json();
+                const statusList = document.getElementById('auth-status-list');
+                const generateForm = document.getElementById('auth-generate-form');
+                const generateAccountSelect = document.getElementById('generate-account');
+                
+                // 显示每个账号的状态
+                let allExist = true;
+                let statusHtml = '<div style="margin-bottom: 15px;">';
+                
+                if (data.status) {
+                    Object.keys(data.status).forEach(account => {
+                        const exists = data.status[account];
+                        if (!exists) allExist = false;
+                        
+                        statusHtml += `
+                            <div style="margin-bottom: 8px;">
+                                <strong>${account}:</strong> 
+                                <span class="status ${exists ? 'completed' : 'failed'}" style="margin-left: 10px;">
+                                    ${exists ? '✅ 已生成' : '❌ 未生成'}
+                                </span>
+                            </div>
+                        `;
+                    });
+                }
+                
+                statusHtml += '</div>';
+                statusList.innerHTML = statusHtml;
+                
+                // 如果所有账号都已生成，显示成功状态
+                if (allExist) {
+                    document.getElementById('auth-section').classList.add('success');
+                } else {
+                    document.getElementById('auth-section').classList.remove('success');
+                    // 显示生成表单
+                    generateForm.style.display = 'block';
+                    // 填充账号下拉框
+                    if (generateAccountSelect && accounts.length > 0) {
+                        generateAccountSelect.innerHTML = '<option value="">请选择账号</option>' +
+                            accounts.map(acc => `<option value="${acc.value}">${acc.label}</option>`).join('');
+                    }
+                }
+                
+                // 重新加载测试列表以更新按钮状态
+                loadTests();
+            } catch (error) {
+                console.error('检查认证状态失败:', error);
+            }
+        }
+
+        // 为指定账号生成认证文件
+        async function generateAuthForAccount() {
+            const generateBtn = document.getElementById('generate-auth-btn');
+            const accountSelect = document.getElementById('generate-account');
+            const outputSection = document.getElementById('output-section');
+            const outputEl = document.getElementById('output');
+            
+            const account = accountSelect.value;
+            
+            if (!account) {
+                alert('请选择账号');
+                return;
+            }
+            
+            // 显示输出区域
+            outputSection.style.display = 'block';
+            outputEl.textContent = `正在为账号 ${account} 生成认证文件...\n`;
+            outputEl.classList.remove('empty');
+            
+            generateBtn.disabled = true;
+            generateBtn.textContent = '生成中...';
+
+            try {
+                const response = await fetch('/api/auth/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        account: account
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    outputEl.textContent += `\n✅ 账号 ${account} 的认证文件生成成功！\n`;
+                    if (result.output) {
+                        outputEl.textContent += `\n输出:\n${result.output}\n`;
+                    }
+                    
+                    // 重新检查认证状态
+                    setTimeout(() => {
+                        checkAuthStatus();
+                    }, 1000);
+                } else {
+                    outputEl.textContent += `\n❌ 账号 ${account} 的认证文件生成失败！\n`;
+                    if (result.error) {
+                        outputEl.textContent += `错误: ${result.error}\n`;
+                    }
+                    if (result.output) {
+                        outputEl.textContent += `\n输出:\n${result.output}\n`;
+                    }
+                }
+                
+                outputEl.scrollTop = outputEl.scrollHeight;
+            } catch (error) {
+                outputEl.textContent += `\n错误: ${error.message}\n`;
+            } finally {
+                generateBtn.disabled = false;
+                generateBtn.textContent = '生成认证文件';
+            }
+        }
+
+        // 加载模块类型列表
+        async function loadModuleTypes() {
+            try {
+                const response = await fetch('/api/module-types');
+                const data = await response.json();
+                moduleTypes = data.moduleTypes || [];
+            } catch (error) {
+                console.error('加载模块类型列表失败:', error);
+                moduleTypes = [];
+            }
+        }
+
+        // 加载账号列表
+        async function loadAccounts() {
+            try {
+                const response = await fetch('/api/accounts');
+                const data = await response.json();
+                accounts = data.accounts || [];
+            } catch (error) {
+                console.error('加载账号列表失败:', error);
+                accounts = [];
+            }
+        }
+
+        // 加载测试列表
+        async function loadTests() {
+            try {
+                const response = await fetch('/api/tests');
+                const data = await response.json();
+                // 检查是否有任何账号的认证文件存在
+                authExists = data.authStatus ? Object.values(data.authStatus).some(exists => exists) : false;
+                const container = document.getElementById('tests-container');
+                
+                container.innerHTML = data.tests.map(test => {
+                    let paramsHtml = '';
+                    if (test.requiresParams) {
+                        paramsHtml = `
+                            <div class="test-params" id="params-${test.id}">
+                                <h4>测试参数</h4>
+                                <div class="form-group">
+                                    <label for="account-${test.id}">账号:</label>
+                                    <select id="account-${test.id}" required>
+                                        <option value="">请选择账号</option>
+                                        ${accounts.map(account => {
+                                            const authStatus = data.authStatus && data.authStatus[account.value];
+                                            const statusText = authStatus ? '✅' : '❌';
+                                            return `<option value="${account.value}">${account.label} ${statusText}</option>`;
+                                        }).join('')}
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="blockId-${test.id}">区块ID:</label>
+                                    <input type="text" id="blockId-${test.id}" placeholder="例如: 501" value="501" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="moduleType-${test.id}">模块状态:</label>
+                                    <select id="moduleType-${test.id}">
+                                        ${moduleTypes.map(type => 
+                                            `<option value="${type.value}" ${type.value === 'review' ? 'selected' : ''}>${type.label}</option>`
+                                        ).join('')}
+                                    </select>
+                                </div>
+                            </div>
+                        `;
+                    }
+                    
+                    return `
+                        <div class="test-card">
+                            <h3>${test.name}</h3>
+                            <p>${test.description}</p>
+                            ${paramsHtml}
+                            <button class="btn" onclick="runTest('${test.id}', '${test.name}', '${test.file}', ${test.requiresParams})" ${!authExists ? 'disabled title="请先生成认证文件"' : ''}>
+                                执行测试
+                            </button>
+                            <span id="status-${test.id}"></span>
+                            ${!authExists ? '<div class="warning">⚠️ 需要先生成认证文件</div>' : ''}
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('加载测试列表失败:', error);
+            }
+        }
+
+        // 执行测试
+        async function runTest(testId, testName, testFile, requiresParams = false) {
+            // 获取参数（如果需要）
+            let account = null;
+            let blockId = null;
+            let moduleType = null;
+            if (requiresParams) {
+                const accountSelect = document.getElementById(`account-${testId}`);
+                const blockIdInput = document.getElementById(`blockId-${testId}`);
+                const moduleTypeSelect = document.getElementById(`moduleType-${testId}`);
+                
+                if (accountSelect) {
+                    account = accountSelect.value;
+                    if (!account) {
+                        alert('请选择账号');
+                        return;
+                    }
+                    
+                    // 检查该账号的认证文件是否存在
+                    try {
+                        const statusResponse = await fetch(`/api/auth/status/${account}`);
+                        const statusData = await statusResponse.json();
+                        if (!statusData.exists) {
+                            alert(`账号 ${account} 的认证文件不存在，请先生成认证文件`);
+                            return;
+                        }
+                    } catch (error) {
+                        console.warn('检查账号认证状态失败:', error);
+                    }
+                }
+                
+                if (blockIdInput) {
+                    blockId = blockIdInput.value.trim();
+                    if (!blockId) {
+                        alert('请输入区块ID');
+                        return;
+                    }
+                }
+                if (moduleTypeSelect) {
+                    moduleType = moduleTypeSelect.value;
+                }
+            }
+
+            const statusEl = document.getElementById(`status-${testId}`);
+            const outputSection = document.getElementById('output-section');
+            const outputEl = document.getElementById('output');
+            
+            // 显示输出区域
+            outputSection.style.display = 'block';
+            let outputText = `正在启动测试: ${testName}...\n`;
+            if (account) {
+                outputText += `账号: ${account}\n`;
+            }
+            if (blockId && moduleType) {
+                outputText += `参数: blockId=${blockId}, moduleType=${moduleType}\n`;
+            }
+            outputEl.textContent = outputText;
+            outputEl.classList.remove('empty');
+
+            try {
+                const requestBody = {
+                    testId,
+                    testName,
+                    testFile,
+                    grep: testName
+                };
+                
+                // 如果有参数，添加到请求体
+                if (account) requestBody.account = account;
+                if (blockId) requestBody.blockId = blockId;
+                if (moduleType) requestBody.moduleType = moduleType;
+
+                const response = await fetch('/api/tests/run', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                const data = await response.json();
+                currentExecutionId = data.executionId;
+                
+                statusEl.innerHTML = `<span class="status running"><span class="loading"></span>运行中</span>`;
+                outputEl.textContent += `执行 ID: ${currentExecutionId}\n`;
+                outputEl.textContent += `状态: ${data.status}\n\n`;
+
+                // 开始轮询状态
+                startStatusPolling(currentExecutionId, testId);
+                
+                // 加载历史记录
+                loadHistory();
+            } catch (error) {
+                outputEl.textContent += `错误: ${error.message}\n`;
+                statusEl.innerHTML = `<span class="status failed">失败</span>`;
+            }
+        }
+
+        // 开始状态轮询
+        function startStatusPolling(executionId, testId) {
+            if (statusCheckInterval) {
+                clearInterval(statusCheckInterval);
+            }
+
+            statusCheckInterval = setInterval(async () => {
+                try {
+                    const response = await fetch(`/api/tests/status/${executionId}`);
+                    const status = await response.json();
+                    const statusEl = document.getElementById(`status-${testId}`);
+                    const outputEl = document.getElementById('output');
+
+                    if (status.status === 'running') {
+                        const duration = Math.floor((status.duration || 0) / 1000);
+                        outputEl.textContent = `执行中... (已运行 ${duration} 秒)\n`;
+                        outputEl.scrollTop = outputEl.scrollHeight;
+                    } else {
+                        // 测试完成
+                        clearInterval(statusCheckInterval);
+                        statusCheckInterval = null;
+
+                        if (status.status === 'completed') {
+                            statusEl.innerHTML = `<span class="status completed">完成</span>`;
+                            outputEl.textContent += `\n✅ 测试执行成功！\n`;
+                            if (status.result) {
+                                outputEl.textContent += `\n输出:\n${status.result.output}\n`;
+                            }
+                        } else {
+                            statusEl.innerHTML = `<span class="status failed">失败</span>`;
+                            outputEl.textContent += `\n❌ 测试执行失败！\n`;
+                            if (status.error) {
+                                outputEl.textContent += `错误: ${status.error}\n`;
+                            }
+                            if (status.result) {
+                                outputEl.textContent += `\n输出:\n${status.result.output}\n`;
+                            }
+                        }
+
+                        outputEl.textContent += `\n执行时间: ${Math.floor((status.duration || 0) / 1000)} 秒\n`;
+                        outputEl.scrollTop = outputEl.scrollHeight;
+                        
+                        // 重新加载历史记录
+                        loadHistory();
+                    }
+                } catch (error) {
+                    console.error('获取状态失败:', error);
+                }
+            }, 2000); // 每2秒检查一次
+        }
+
+        // 加载历史记录
+        async function loadHistory() {
+            try {
+                const response = await fetch('/api/tests/history');
+                const data = await response.json();
+                const container = document.getElementById('history-container');
+                
+                if (data.history.length === 0) {
+                    container.innerHTML = '<p style="color: #666;">暂无执行历史</p>';
+                    return;
+                }
+
+                container.innerHTML = data.history.map(item => {
+                    const statusClass = item.status;
+                    const statusText = {
+                        'running': '运行中',
+                        'completed': '完成',
+                        'failed': '失败'
+                    }[item.status] || item.status;
+
+                    const duration = item.duration ? Math.floor(item.duration / 1000) : 0;
+                    const time = item.startTime ? new Date(item.startTime).toLocaleString('zh-CN') : '';
+
+                    return `
+                        <div class="history-item">
+                            <h4>
+                                ${item.executionId}
+                                <span class="status ${statusClass}">${statusText}</span>
+                            </h4>
+                            <div class="meta">
+                                执行时间: ${time} | 耗时: ${duration} 秒
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (error) {
+                console.error('加载历史记录失败:', error);
+            }
+        }
+
+        // 页面加载时初始化
+        window.addEventListener('DOMContentLoaded', async () => {
+            // 先加载账号列表，再检查认证状态（因为认证状态需要账号列表）
+            await loadAccounts();
+            await loadModuleTypes();
+            checkAuthStatus();
+            loadHistory();
+        });
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+
+# Test results
+test-results/
+playwright-report/
+screenshots/
+reports/
+
+# Environment variables
+.env
+.env.local
+
+# Storage state (may contain sensitive data)
+src/fixtures/storageState*.json
+
+# Build output
+dist/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
